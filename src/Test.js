@@ -1,16 +1,46 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
-import { Stage, Layer, Rect, Image, Text, Group } from "react-konva";
+import {
+  Stage,
+  Layer,
+  Rect,
+  Image,
+  Text,
+  Group,
+  Label,
+  Tag,
+} from "react-konva";
 import useImage from "use-image";
-import { Row, Col } from "antd";
+import "antd/dist/antd.min.css";
+import { Row, Col, Input } from "antd";
+
+//mapping data
 const Data = ({ data }) => {
-  return data?.map((item) => <>{JSON.stringify(item)}</>);
+  return data?.map((item) => (
+    <>
+      <Row>
+        <Col span={6}>
+          <Input addonBefore="Area" value={item.name} />
+        </Col>
+        <Col span={6}>
+          <Input addonBefore="Width" value={Math.abs(item.width)} />
+        </Col>
+        <Col span={6}>
+          <Input addonBefore="Height" value={Math.abs(item.height)} />
+        </Col>
+      </Row>
+
+      {/* <div><h2>new data</h2></div> */}
+    </>
+  ));
 };
+
+//Drawaing Annotions
 const DrawAnnotations = (props) => {
   const [annotations, setAnnotations] = useState([]);
   const [newAnnotation, setNewAnnotation] = useState([]);
   const [image] = useImage(
-    "https://media.istockphoto.com/id/1251531558/vector/architecture-plan-set-of-apartment-studio-condominium-flat-house.webp?s=612x612&w=is&k=20&c=AJ0UXcgyhuRc7yb6OWY3trLVZONHHvGRYoLZKvHLvG0="
+    "https://online.visual-paradigm.com/repository/images/c0f8b0e3-db02-4661-bd08-947c8b414343/floor-plan-design/simple-apartment-floor-plan.png"
   );
 
   const handleMouseDown = (event) => {
@@ -28,9 +58,10 @@ const DrawAnnotations = (props) => {
       const annotationToAdd = {
         x: sx,
         y: sy,
-        width: x - sx,
-        height: y - sy,
+        width: Math.trunc(x - sx),
+        height: Math.trunc(y - sy),
         key: annotations.length + 1,
+        name: `Area ${annotations.length + 1}`,
       };
       annotations.push(annotationToAdd);
       setNewAnnotation([]);
@@ -50,27 +81,28 @@ const DrawAnnotations = (props) => {
         {
           x: sx,
           y: sy,
-          width: x - sx,
-          height: y - sy,
+          width: Math.trunc(x - sx),
+          height: Math.trunc(y - sy),
           key: "0",
+          name: "",
         },
       ]);
     }
   };
 
   const annotationsToDraw = [...annotations, ...newAnnotation];
-  console.log(annotationsToDraw[0]);
+  // console.log(annotationsToDraw[0]);
   return (
     <>
       <Stage
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
-        width={900}
-        height={700}
+        width={700}
+        height={500}
       >
         <Layer>
-          <Image image={image} width={900} height={700} />
+          <Image image={image} width={700} height={500} />
 
           {annotationsToDraw.map((value) => {
             return (
@@ -84,12 +116,52 @@ const DrawAnnotations = (props) => {
                   stroke="red"
                 />
                 <Text
-                  x={value.x + 10}
-                  y={value.y + value.height / 2}
-                  Text={`Area:  ${annotations.length}`}
+                  x={
+                    value.x > 0
+                      ? value.x + value.width / 2 - 25
+                      : value.x + value.width / 2 - 25
+                  }
+                  y={
+                    value.y > 0
+                      ? value.y + value.height / 2 - 20
+                      : value.y + value.height
+                  }
+                  Text={`Area:  ${value.key} \n Width: ${Math.abs(
+                    value.width
+                  )} \n Height: ${Math.abs(value.height)}`}
                   fill="black"
                   width="50px"
                 />
+
+                <Label
+                  x={value.x}
+                  y={value.y + value.height / 2 - 25}
+                  fill="black"
+                  width="50px"
+                  rotation={90}
+                  height="50px"
+                >
+                  <Tag fill="red" />
+                  <Text
+                    padding={5}
+                    fill="white"
+                    text={`ft : ${Math.trunc(value.height)}`}
+                  />
+                </Label>
+
+                <Label
+                  x={value.x + value.width - 30}
+                  y={value.y - 20}
+                  width="50px"
+                  height="50px"
+                >
+                  <Tag fill="red" />
+                  <Text
+                    padding={5}
+                    fill="white"
+                    text={`ft : ${Math.trunc(value.width)}`}
+                  />
+                </Label>
               </>
             );
           })}
@@ -101,8 +173,6 @@ const DrawAnnotations = (props) => {
 
 export default function App() {
   const [localData, setLocalData] = useState([]);
-
-  let c = 0;
   const data = (d) => {
     setLocalData(d);
 
@@ -110,14 +180,14 @@ export default function App() {
   };
 
   return (
-    <Row>
-      <Col sm={10}>
-        <p>Start to draw!</p>
+    <Row align="middle" justify="center">
+      <Col span={8}>
+        <h2>Start to draw!</h2>
         <DrawAnnotations data={(d) => data(d)} />
       </Col>
-      <Col sm={10}>
+      <Col span={8} offset={6}>
+        <h2>Area</h2>
         <Data data={localData} />
-        <h2>dtfg</h2>
       </Col>
     </Row>
   );
