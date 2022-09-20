@@ -13,6 +13,7 @@ import {
 import useImage from "use-image";
 import "antd/dist/antd.min.css";
 import { Row, Col, Input } from "antd";
+import RectComponent from "./Rectcomponents";
 
 //mapping data
 const Data = ({ data }) => {
@@ -37,16 +38,44 @@ const Data = ({ data }) => {
 
 //Drawaing Annotions
 const DrawAnnotations = (props) => {
+  //draw code for dynamic rectange
+
+  const [active, setActive] = useState(true);
+
+  const initialRectangles = [
+    {
+      x: 10,
+      y: 10,
+      width: 100,
+      height: 100,
+      fill: "red",
+      id: "rect1",
+    },
+  ];
+
   const [annotations, setAnnotations] = useState([]);
   const [newAnnotation, setNewAnnotation] = useState([]);
   const [image] = useImage(
     "https://online.visual-paradigm.com/repository/images/c0f8b0e3-db02-4661-bd08-947c8b414343/floor-plan-design/simple-apartment-floor-plan.png"
   );
 
+  const [rectangles, setRectangles] = React.useState(annotations);
+  const [selectedId, selectShape] = React.useState(null);
+
+  const checkDeselect = (e) => {
+    // deselect when clicked on empty area
+    const clickedOnEmpty = e.target === e.target.getStage();
+    if (clickedOnEmpty) {
+      selectShape(null);
+    }
+  };
+
   const handleMouseDown = (event) => {
-    if (newAnnotation.length === 0) {
-      const { x, y } = event.target.getStage().getPointerPosition();
-      setNewAnnotation([{ x, y, width: 0, height: 0, key: "0" }]);
+    if (active === true) {
+      if (newAnnotation.length === 0) {
+        const { x, y } = event.target.getStage().getPointerPosition();
+        setNewAnnotation([{ x, y, width: 0, height: 0, key: "0" }]);
+      }
     }
   };
 
@@ -66,6 +95,7 @@ const DrawAnnotations = (props) => {
       annotations.push(annotationToAdd);
       setNewAnnotation([]);
       setAnnotations(annotations);
+      setActive(false);
     }
   };
   useEffect(() => {
@@ -104,65 +134,21 @@ const DrawAnnotations = (props) => {
         <Layer>
           <Image image={image} width={700} height={500} />
 
-          {annotationsToDraw.map((value) => {
+          {annotationsToDraw.map((rect, i) => {
             return (
-              <>
-                <Rect
-                  x={value.x}
-                  y={value.y}
-                  width={value.width}
-                  height={value.height}
-                  fill="transparent"
-                  stroke="red"
-                />
-                <Text
-                  x={
-                    value.x > 0
-                      ? value.x + value.width / 2 - 25
-                      : value.x + value.width / 2 - 25
-                  }
-                  y={
-                    value.y > 0
-                      ? value.y + value.height / 2 - 20
-                      : value.y + value.height
-                  }
-                  Text={`Area:  ${value.key} \n Width: ${Math.abs(
-                    value.width
-                  )} \n Height: ${Math.abs(value.height)}`}
-                  fill="black"
-                  width="50px"
-                />
-
-                <Label
-                  x={value.x}
-                  y={value.y + value.height / 2 - 25}
-                  fill="black"
-                  width="50px"
-                  rotation={90}
-                  height="50px"
-                >
-                  <Tag fill="red" />
-                  <Text
-                    padding={5}
-                    fill="white"
-                    text={`ft : ${Math.trunc(value.height)}`}
-                  />
-                </Label>
-
-                <Label
-                  x={value.x + value.width - 30}
-                  y={value.y - 20}
-                  width="50px"
-                  height="50px"
-                >
-                  <Tag fill="red" />
-                  <Text
-                    padding={5}
-                    fill="white"
-                    text={`ft : ${Math.trunc(value.width)}`}
-                  />
-                </Label>
-              </>
+              <RectComponent
+                key={i}
+                shapeProps={rect}
+                isSelected={rect.id === selectedId}
+                onSelect={() => {
+                  selectShape(rect.id);
+                }}
+                onChange={(newAttrs) => {
+                  const rects = annotations.slice();
+                  rects[i] = newAttrs;
+                  setRectangles(rects);
+                }}
+              />
             );
           })}
         </Layer>
